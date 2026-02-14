@@ -96,4 +96,34 @@ similarity_df = df1.join(df2, col("a.file_name") < col("b.file_name")) \
 print("\nTop 5 Most Similar Book Pairs:")
 similarity_df.show(5, truncate=False)
 
+
+threshold = 0.7
+
+edges_df = similarity_df.filter(col("cosine_similarity") > threshold)
+
+print("\nEdges in Similarity Network:")
+edges_df.show(10, truncate=False)
+
+
+from pyspark.sql.functions import count
+
+# Count how many times each book appears
+book1_counts = edges_df.groupBy("book1").agg(count("*").alias("count"))
+book2_counts = edges_df.groupBy("book2").agg(count("*").alias("count"))
+
+# Rename columns
+book1_counts = book1_counts.withColumnRenamed("book1", "book")
+book2_counts = book2_counts.withColumnRenamed("book2", "book")
+
+# Combine
+influence_df = book1_counts.union(book2_counts) \
+    .groupBy("book") \
+    .agg(expr("sum(count) as total_connections")) \
+    .orderBy(col("total_connections").desc())
+
+print("\nMost Influential Books (by Degree Centrality):")
+influence_df.show(5, truncate=False)
+
+
+
 spark.stop()
