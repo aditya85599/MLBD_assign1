@@ -53,19 +53,28 @@ public class WordCount {
 
     public static void main(String[] args) throws Exception {
 
-        Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "word count");
+    long startTime = System.currentTimeMillis();
 
-        job.setJarByClass(WordCount.class);
-        job.setMapperClass(Map.class);
-        job.setReducerClass(Reduce.class);
+    Configuration conf = new Configuration();
+    conf.setLong("mapreduce.input.fileinputformat.split.maxsize", 1048576);
 
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
+    Job job = Job.getInstance(conf, "word count");
 
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    job.setJarByClass(WordCount.class);
+    job.setMapperClass(Map.class);
+    job.setReducerClass(Reduce.class);
 
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+    boolean success = job.waitForCompletion(true);
+
+    long endTime = System.currentTimeMillis();
+    System.out.println("Total Execution Time: " + (endTime - startTime) + " ms");
+
+    System.exit(success ? 0 : 1);
     }
 }
